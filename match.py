@@ -32,7 +32,7 @@ def make_groups(df, min_size=6, max_size=8):
             break
     else:
         raise ValueError("Cannot make groups evenly")
-    
+
     group_sizes = [total // num_groups] * num_groups
     for i in range(total % num_groups):
         group_sizes[i] += 1
@@ -50,14 +50,14 @@ def create_unique_matches(group, num_games=8):
     players = group['name'].tolist()
     all_pairs = list(itertools.combinations(players, 2))
     random.shuffle(all_pairs)
-    
+
     used_pairs = set()
     matches = []
-    
+
     for _ in range(num_games):
         valid_found = False
         attempts = 0
-        
+
         while not valid_found and attempts < 1000:
             selected = random.sample(players, 4)
             team1 = tuple(sorted(selected[:2]))
@@ -68,25 +68,39 @@ def create_unique_matches(group, num_games=8):
                 matches.append((list(team1), list(team2)))
                 valid_found = True
             attempts += 1
-        
+
         if not valid_found:
             selected = random.sample(players, 4)
             matches.append((selected[:2], selected[2:]))
-            
+
     return matches
 
 group_matches = {}
 group_members = {}
 for idx, group in enumerate(groups, start=1):
     matches = create_unique_matches(group)
-    group_name = f'Group {idx}'
+    group_name = f'Group_{idx}'
     group_matches[group_name] = matches
     group_members[group_name] = group['name'].tolist()
 
+results = []
 for group, members in group_members.items():
     print(f"=== {group} ===")
     print(f"Members ({len(members)}명): {members}")
     print("Games:")
     for i, match in enumerate(group_matches[group], 1):
-        print(f"  Game {i}: {match[0]} vs {match[1]}")
+        team1 = ', '.join(match[0])
+        team2 = ', '.join(match[1])
+        print(f"  Game {i}: {team1} vs {team2}")
+
+        results.append({
+            'Group': group,
+            'Game': i,
+            'Team 1': team1,
+            'Team 2': team2
+        })
     print()
+
+results_df = pd.DataFrame(results)
+
+results_df.to_excel('matching_results.xlsx', index=False)
