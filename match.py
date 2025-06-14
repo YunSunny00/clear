@@ -1,15 +1,8 @@
 import pandas as pd
 import random
-import itertools
-import argparse
-
-args = argparse.ArgumentParser()
-args.add_argument('--user', type=str, default='user.csv', help='Participants CSV file path')
-args = args.parse_args()
-part_path = args.user
 
 db = pd.read_csv('db.csv')
-user = pd.read_csv(part_path)
+user = pd.read_csv('user.csv')
 
 participants = user.iloc[:, 0].tolist()
 

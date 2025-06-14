@@ -4,7 +4,7 @@
 ```
 git clone git@github.com:YunSunny00/clear.git
 cd clear
-python3 match.py --user user.csv
+python3 match.py
 ```
 
 ## File Description
