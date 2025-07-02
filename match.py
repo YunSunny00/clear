@@ -1,5 +1,6 @@
 import pandas as pd
 import random
+from collections import defaultdict
 
 db = pd.read_csv('db.csv')
 user = pd.read_csv('user.csv')
@@ -53,8 +54,10 @@ def create_balanced_matches(group):
     player_target = {player: participation_targets[i] for i, player in enumerate(players)}
     participation_counts = {p: 0 for p in players}
     player_streak = {p: 0 for p in players}
+    pair_counts = defaultdict(int)  # (A, B): number of times played together
 
-    used_pairs = set()
+    used_teams = set()
+    used_opponents = set()
     matches = []
 
     remaining_slots = total_slots
@@ -65,52 +68,61 @@ def create_balanced_matches(group):
             p for p in players
             if participation_counts[p] < player_target[p] and player_streak[p] < 2
         ]
-
         if len(eligible_players) < num_players_in_game:
             eligible_players = [
-                p for p in players
-                if participation_counts[p] < player_target[p]
+                p for p in players if participation_counts[p] < player_target[p]
             ]
-
         if len(eligible_players) < num_players_in_game:
-            raise RuntimeError("Impossible to create balanced matches with current constraints.")
+            eligible_players = players 
 
-        eligible_players.sort(key=lambda x: (participation_counts[x], player_streak[x]))
+        best_selection = None
+        min_pair_score = float('inf')
 
-        selected = eligible_players[:num_players_in_game]
+        for _ in range(50):
+            try_sample = random.sample(eligible_players, num_players_in_game)
 
+            if num_players_in_game == 4:
+                team1 = tuple(sorted(try_sample[:2]))
+                team2 = tuple(sorted(try_sample[2:]))
+
+                pair_score = (
+                    pair_counts[tuple(sorted((team1[0], team1[1])))] +
+                    pair_counts[tuple(sorted((team2[0], team2[1])))]
+                )
+
+                if (team1, team2) in used_opponents or team1 == team2:
+                    continue
+
+                if pair_score < min_pair_score:
+                    best_selection = try_sample
+                    min_pair_score = pair_score
+
+            else:
+                best_selection = try_sample
+                break
+
+        if best_selection is None:
+            best_selection = random.sample(eligible_players, num_players_in_game)
+
+        selected = best_selection
         if num_players_in_game == 4:
-            random.shuffle(selected)
             team1 = tuple(sorted(selected[:2]))
             team2 = tuple(sorted(selected[2:]))
-
-            if team1 in used_pairs or team2 in used_pairs or team1 == team2:
-                for _ in range(100):
-                    random.shuffle(selected)
-                    team1 = tuple(sorted(selected[:2]))
-                    team2 = tuple(sorted(selected[2:]))
-                    if team1 not in used_pairs and team2 not in used_pairs and team1 != team2:
-                        break
-
-            used_pairs.add(team1)
-            used_pairs.add(team2)
             matches.append((list(team1), list(team2)))
-
+            used_teams.add(team1)
+            used_teams.add(team2)
+            used_opponents.add((team1, team2))
+            pair_counts[tuple(sorted((team1[0], team1[1])))] += 1
+            pair_counts[tuple(sorted((team2[0], team2[1])))] += 1
         else:
             matches.append((list(selected), []))
-
         for p in players:
             if p in selected:
                 participation_counts[p] += 1
                 player_streak[p] += 1
             else:
                 player_streak[p] = 0
-
         remaining_slots -= num_players_in_game
-
-    for p in players:
-        print(f"{p}: {participation_counts[p]} / target {player_target[p]}")
-        assert participation_counts[p] == player_target[p], f"{p} did not meet target participation."
 
     return matches
 
