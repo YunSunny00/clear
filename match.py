@@ -82,12 +82,12 @@ def create_balanced_matches(group):
             try_sample = random.sample(eligible_players, num_players_in_game)
 
             if num_players_in_game == 4:
-                team1 = tuple(sorted(try_sample[:2]))
-                team2 = tuple(sorted(try_sample[2:]))
+                team1 = tuple((try_sample[:2]))
+                team2 = tuple((try_sample[2:]))
 
                 pair_score = (
-                    pair_counts[tuple(sorted((team1[0], team1[1])))] +
-                    pair_counts[tuple(sorted((team2[0], team2[1])))]
+                    pair_counts[tuple(((team1[0], team1[1])))] +
+                    pair_counts[tuple(((team2[0], team2[1])))]
                 )
 
                 if (team1, team2) in used_opponents or team1 == team2:
@@ -106,14 +106,14 @@ def create_balanced_matches(group):
 
         selected = best_selection
         if num_players_in_game == 4:
-            team1 = tuple(sorted(selected[:2]))
-            team2 = tuple(sorted(selected[2:]))
+            team1 = tuple((selected[:2]))
+            team2 = tuple((selected[2:]))
             matches.append((list(team1), list(team2)))
             used_teams.add(team1)
             used_teams.add(team2)
             used_opponents.add((team1, team2))
-            pair_counts[tuple(sorted((team1[0], team1[1])))] += 1
-            pair_counts[tuple(sorted((team2[0], team2[1])))] += 1
+            pair_counts[tuple(((team1[0], team1[1])))] += 1
+            pair_counts[tuple(((team2[0], team2[1])))] += 1
         else:
             matches.append((list(selected), []))
         for p in players:
